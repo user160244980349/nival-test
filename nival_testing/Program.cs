@@ -9,18 +9,42 @@ namespace nival_testing
     {
         static void Main(string[] args)
         {
+            /**
+             * Если программе передан 1 параметр и 
+             * соответствующая директория существует,
+             * начинаем выполнение программы.
+             */
             if (args.Length == 1 && Directory.Exists(args[0]))
             {
+                /**
+                 * запуск таймера работы программы.
+                 * получение путей до всех *.xml файлов
+                 * создание списка потоков для обработки
+                 * файлов.
+                 */
                 DateTime programStartTime = DateTime.Now;
                 string[] filepaths = Directory.GetFiles(args[0], "*.xml");
                 var tasks = new List<Task<TaskOutput>>();
 
+                /**
+                 * Запуск создание и запуск потоков
+                 */
                 foreach (var filepath in filepaths)
                 {
                     tasks.Add(Task.Factory.StartNew(() => TaskFunc(filepath)));
                 }
                 Task.WaitAll(tasks.ToArray());
 
+                /**
+                 * Когда все потоки закончили выполняться,
+                 * разбираем результаты их работы,
+                 * находим файл с наибольшим количеством
+                 * успешных десериализаций.
+                 * Выводим всю информацию записанную
+                 * классом Logger.
+                 * Завершаем отсчет времени выполнения
+                 * программы.
+                 */
                 int mostCompletedCalculations = 0; 
                 string mostCompletedFile = "null"; 
                 foreach (var task in tasks)
@@ -63,9 +87,19 @@ namespace nival_testing
         
         static TaskOutput TaskFunc(string filepath)
         {
+            /**
+             * Создаем объект CalculationReader
+             * и запускаем чтение документа
+             */
             CalculationReader reader = new CalculationReader(filepath);
             reader.ParseCalculations();
 
+            /**
+             * После завершения чтения файла
+             * имеем список удачно десериализованных
+             * объектов вычислительных операций,
+             * производим подсчет результатов.
+             */
             int result = 0;
             foreach (var calculation in reader.calculations)
             {

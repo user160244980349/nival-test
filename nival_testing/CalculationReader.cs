@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Xml;
-using System.Xml.Linq;
-using System;
 
 namespace nival_testing
 {
-
+    /**
+     * Класс для чтения xml 
+     * документов заданной 
+     * в задании структуры
+     */
     class CalculationReader
     {
         private string filepath;
@@ -21,21 +23,49 @@ namespace nival_testing
         
         public void ParseCalculations()
         {
+            /**
+             * В задании не указано,
+             * но я посчитал, что перехват исключений
+             * класса XmlTextReader будет хорошей идеей.
+             */
             try
             {
                 XmlTextReader reader = new XmlTextReader(filepath);
 
+                /**
+                 * Читаем документ пока не дойдем до
+                 * элемента calculations.
+                 */
                 while (reader.Read())
                 {
+                    /**
+                     * Если элемент не является открывающим
+                     * тэгом пропускаем его, так как в заданной структуре
+                     * у нас нет элементов содержащих информацию непосредственно
+                     * внутри себя, а ошибки вроде незакрытых тэгов поймает
+                     * класс XmlTextReader.
+                     */
                     if (reader.NodeType != XmlNodeType.Element)
                         continue;
 
+                    /**
+                     * Если корневой элемент не является
+                     * тегом folder, сообщаем об ошибке и 
+                     * продолжаем читать файл.
+                     */
                     if (reader.Name != "folder")
                         logger.AddMessage("Непредвиденный элемент <" + reader.Name + " ... >, ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
 
+                    /**
+                     * Если атрибут name корневого элемента не calculations
+                     * то сообщаем об ошибке и продолжаем читать файл.
+                     */
                     if (reader.GetAttribute("name") != "calculations")
                         logger.AddMessage("Непредвиденный элемент <" + reader.Name + " name=\"" + reader.GetAttribute("name") + "\", ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
 
+                    /**
+                     * Разбор элементов calculation в calculations
+                     */
                     while (reader.Read())
                     {
                         if (reader.NodeType != XmlNodeType.Element)
@@ -62,14 +92,25 @@ namespace nival_testing
         {
             var newCalculation = new Calculation();
 
+            /**
+             * Флаги валидности полей вычислительной операции
+             */
             bool uidValid = false;
             bool operandValid = false;
             bool modValid = false;
 
+            /**
+             * Флаги присутствия полей вычислительной операции
+             */
             bool uidFound = false;
             bool operandFound = false;
             bool modFound = false;
 
+            /**
+             * Читаем файл до первого закрывающего тэга
+             * после чего проверяем флаги валидности и присутствия
+             * компонентов вычислительной операции.
+             */
             while (reader.Read() && reader.NodeType != XmlNodeType.EndElement)
             {
                 if (reader.NodeType != XmlNodeType.Element)
@@ -129,11 +170,17 @@ namespace nival_testing
                 calculations.Add(newCalculation);
         }
 
+        /**
+         * Метод считывающий значение поля uid.
+         */
         private string ParseUid(XmlTextReader reader)
         {
             return reader.GetAttribute("value");
         }
 
+        /**
+         * Метод считывающий значение поля operand.
+         */
         private Operand ParseOperand(XmlTextReader reader)
         {
             Operand result = Operand.add;
@@ -152,11 +199,17 @@ namespace nival_testing
             return result;
         }
 
+        /**
+         * Метод считывающий значение поля mod.
+         */
         private int ParseMod(XmlTextReader reader)
         {
             return int.Parse(reader.GetAttribute("value"));
         }
 
+        /**
+         * Метод валидации значения поля uid.
+         */
         private bool UidValidation(XmlTextReader reader)
         {
             bool validity = false;
@@ -169,6 +222,9 @@ namespace nival_testing
             return validity;
         }
 
+        /**
+         * Метод валидации значения поля operand.
+         */
         private bool OperandValidation(XmlTextReader reader)
         {
             bool validity = false;
@@ -201,6 +257,9 @@ namespace nival_testing
             return validity;
         }
 
+        /**
+         * Метод валидации значения поля mod.
+         */
         private bool ModValidation(XmlTextReader reader)
         {
             bool validity = false;

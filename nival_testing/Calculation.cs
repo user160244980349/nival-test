@@ -1,6 +1,10 @@
 ﻿
 namespace nival_testing
 {
+    /**
+     * Модель данных для 
+     * вычислительной операции
+     */
     class Calculation
     {
         public string uid;

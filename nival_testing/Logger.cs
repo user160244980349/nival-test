@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace nival_testing
 {
+    /**
+     * Класс для накопления информации
+     * о различных ошибках.
+     */
     class Logger
     {
         private List<string> messages;
