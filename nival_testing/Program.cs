@@ -116,8 +116,7 @@ namespace nival_testing
                         result *= calculation.mod;
                         break;
                     case Operand.divide:
-                        if (calculation.mod != 0)
-                            result /= calculation.mod;
+                        result /= calculation.mod;
                         break;
                 }
             }
