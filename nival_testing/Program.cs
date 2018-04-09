@@ -82,6 +82,7 @@ namespace nival_testing
                 Console.WriteLine("Неверный параметр запуска!");
             }
             Console.WriteLine("\nНажмите любую клавишу для выхода.");
+            Console.ResetColor();
             Console.ReadKey();
         }
         
