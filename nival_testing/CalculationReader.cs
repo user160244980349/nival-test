@@ -24,8 +24,7 @@ namespace nival_testing
         public void ParseCalculations()
         {
             /**
-             * В задании не указано,
-             * но я посчитал, что перехват исключений
+             * Я посчитал, что перехват исключений
              * класса XmlTextReader будет хорошей идеей.
              */
             try
@@ -168,7 +167,12 @@ namespace nival_testing
                 logger.AddMessage("Пропущен <int name=\"mod\" value=\" ??? \"/>, где ??? - целое число, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
 
             if (uidValid && operandValid && modValid)
-                calculations.Add(newCalculation);
+            {
+                if (newCalculation.mod == 0 && newCalculation.operand == Operand.divide)
+                    logger.AddMessage("Деление на ноль, строка " + (reader.LineNumber - 1) + ", позиция " + reader.LinePosition + ".");
+                else
+                    calculations.Add(newCalculation);
+            }
         }
 
         /**
