@@ -42,6 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CalculationReader.cs" />
+    <Compile Include="Calculation.cs" />
+    <Compile Include="TaskOutput.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Operands.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
