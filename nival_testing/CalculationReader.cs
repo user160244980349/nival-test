@@ -27,15 +27,27 @@ namespace nival_testing
 
                 while (reader.Read())
                 {
-                    if (reader.Name == "folder" && reader.GetAttribute("name") == "calculations")
+                    if (reader.NodeType != XmlNodeType.Element)
+                        continue;
+
+                    if (reader.Name != "folder")
+                        logger.AddMessage("Непредвиденный элемент <" + reader.Name + " ... >, ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
+                    if (reader.GetAttribute("name") != "calculations")
+                        logger.AddMessage("Непредвиденный элемент <" + reader.Name + " name=\"" + reader.GetAttribute("name") + "\", ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            if (reader.NodeType == XmlNodeType.Element && reader.Name == "folder" && reader.GetAttribute("name") == "calculation")
-                            {
-                                ParseCalculation(reader);
-                            }
-                        }
+                        if (reader.NodeType != XmlNodeType.Element)
+                            continue;
+
+                        if (reader.Name != "folder")
+                            logger.AddMessage("Непредвиденный элемент <" + reader.Name + " ... >, ожидался <folder name=\"calculation\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
+                        if (reader.GetAttribute("name") != "calculation")
+                            logger.AddMessage("Непредвиденный элемент <" + reader.Name + " name=\"" + reader.GetAttribute("name") + "\", ожидался <folder name=\"calculation\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
+                        ParseCalculation(reader);
                     }
                 } 
             }
@@ -54,34 +66,49 @@ namespace nival_testing
             bool operandValid = false;
             bool modValid = false;
 
+            bool uidFound = false;
+            bool operandFound = false;
+            bool modFound = false;
+
             while (reader.Read() && reader.NodeType != XmlNodeType.EndElement)
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name == "str")
+                if (reader.NodeType != XmlNodeType.Element)
+                    continue;
+
+                if (reader.Name == "str")
                 {
+                    if (reader.GetAttribute("name") == null)
+                        logger.AddMessage("Пропущен атрибут name, <str name=\" ??? \" ... />, где ??? - uid или operand, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
                     if (reader.GetAttribute("name") == "uid")
                     {
+                        uidFound = true;
                         if (UidValidation(reader))
                         {
                             uidValid = true;
                             newCalculation.uid = ParseUid(reader);
                         }
                     }
-                    else
+
+                    if (reader.GetAttribute("name") == "operand")
                     {
-                        if (reader.GetAttribute("name") == "operand")
+                        operandFound = true;
+                        if (OperandValidation(reader))
                         {
-                            if (OperandValidation(reader))
-                            {
-                                operandValid = true;
-                                newCalculation.operand = ParseOperand(reader);
-                            }
+                            operandValid = true;
+                            newCalculation.operand = ParseOperand(reader);
                         }
                     }
                 }
-                else
+
+                if (reader.Name == "int")
                 {
-                    if (reader.NodeType == XmlNodeType.Element && reader.Name == "int")
+                    if (reader.GetAttribute("name") == null)
+                        logger.AddMessage("Пропущен атрибут name, <int name=\"mod\" ... />, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
+                    if (reader.GetAttribute("name") == "mod")
                     {
+                        modFound = true;
                         if (ModValidation(reader))
                         {
                             modValid = true;
@@ -90,6 +117,14 @@ namespace nival_testing
                     }
                 }
             }
+
+            if (!uidFound)
+                logger.AddMessage("Пропущен <str name=\"uid\" value=\" ??? \"/>, где ??? - строка идентификатор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+            if (!operandFound)
+                logger.AddMessage("Пропущен <str name=\"operand\" value=\" ??? \"/>, где ??? - строка, определющая оператор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+            if (!modFound)
+                logger.AddMessage("Пропущен <int name=\"mod\" value=\" ??? \"/>, где ??? - целое число, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+
             if (uidValid && operandValid && modValid)
                 calculations.Add(newCalculation);
         }
@@ -127,9 +162,9 @@ namespace nival_testing
             bool validity = false;
 
             if (reader.GetAttribute("value") != null)
-            {
                 validity = true;
-            }
+            else
+                logger.AddMessage("Пропущен атрибут value, <str name=\"uid\" value=\" ??? \"/>, где ??? - строка идентификатор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
 
             return validity;
         }
@@ -138,27 +173,29 @@ namespace nival_testing
         {
             bool validity = false;
 
-            if (reader.GetAttribute("value") != null)
+            if (reader.GetAttribute("value") == null)
             {
-                switch (reader.GetAttribute("value"))
-                {
-                    default:
-                        logger.AddMessage("Неверный атрибут name тэга str, должен быть <str name=\"operand\" value=\" ??? \"/>" +
-                            " где ??? - строка определющая оператор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
-                        break;
-                    case "add":
-                        validity = true;
-                        break;
-                    case "subtract":
-                        validity = true;
-                        break;
-                    case "multiply":
-                        validity = true;
-                        break;
-                    case "divide":
-                        validity = true;
-                        break;
-                }
+                logger.AddMessage("Пропущен атрибут value, <str name=\"operand\" value=\" ??? \"/>, где ??? - строка, определющая оператор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                return validity;
+            }
+
+            switch (reader.GetAttribute("value"))
+            {
+                default:
+                    logger.AddMessage("Неверный атрибут value, <str name=\"operand\" value=\" ??? \"/>, где ??? - строка, определющая оператор, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                    break;
+                case "add":
+                    validity = true;
+                    break;
+                case "subtract":
+                    validity = true;
+                    break;
+                case "multiply":
+                    validity = true;
+                    break;
+                case "divide":
+                    validity = true;
+                    break;
             }
 
             return validity;
@@ -168,14 +205,18 @@ namespace nival_testing
         {
             bool validity = false;
 
-            if (reader.GetAttribute("value") != null)
+            if (reader.GetAttribute("value") == null)
             {
-                bool isDigit = int.TryParse(reader.GetAttribute("value"), out int result);
-                if (isDigit)
-                {
-                    validity = true;
-                }
+                logger.AddMessage("Пропущен атрибут value, <int name=\"mod\" value=\" ??? \"/>, где ??? - целое число, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                return validity;
             }
+
+            bool isDigit = int.TryParse(reader.GetAttribute("value"), out int result);
+
+            if (isDigit)
+                validity = true;
+            else
+                logger.AddMessage("value не является числом, <int name=\"mod\" value=\" ??? \"/>, где ??? - целое число, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
 
             return validity;
         }
