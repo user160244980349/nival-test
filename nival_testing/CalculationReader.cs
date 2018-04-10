@@ -53,19 +53,25 @@ namespace nival_testing
                      * продолжаем читать файл.
                      */
                     if (reader.Name != "folder")
+                    { 
                         logger.AddMessage("Непредвиденный элемент <" + reader.Name + " ... >, ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                        continue;
+                    }
 
                     /**
                      * Если атрибут name корневого элемента не calculations
                      * то сообщаем об ошибке и продолжаем читать файл.
                      */
                     if (reader.GetAttribute("name") != "calculations")
+                    { 
                         logger.AddMessage("Непредвиденный элемент <" + reader.Name + " name=\"" + reader.GetAttribute("name") + "\", ожидался <folder name=\"calculations\">, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                        continue;
+                    }
 
-                    /**
-                     * Разбор элементов calculation в calculations
-                     */
-                    while (reader.Read())
+                /**
+                 * Разбор элементов calculation в calculations
+                 */
+                while (reader.Read())
                     {
                         if (reader.NodeType != XmlNodeType.Element)
                             continue;
@@ -78,12 +84,14 @@ namespace nival_testing
 
                         ParseCalculation(reader);
                     }
-                } 
+                }
+
+                reader.Close();
             }
             catch (XmlException e)
             {
                 logger.AddMessage("Фатальная ошибка с структуре xml-файла:\n   " + e.Message);
-            } 
+            }
 
         }
 
@@ -115,15 +123,25 @@ namespace nival_testing
             {
                 if (reader.NodeType != XmlNodeType.Element)
                     continue;
-
+                
                 if (reader.Name == "str")
                 {
                     if (reader.GetAttribute("name") == null)
+                    { 
                         logger.AddMessage("Пропущен атрибут name, <str name=\" ??? \" ... />, где ??? - uid или operand, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                        continue;
+                    }
 
                     if (reader.GetAttribute("name") == "uid")
                     {
                         uidFound = true;
+
+                        if (uidValid)
+                        {
+                            logger.AddMessage("Избыточный элемент <str name=\"uid\" ... />, исключите его, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                            continue;
+                        }
+
                         if (UidValidation(reader))
                         {
                             uidValid = true;
@@ -134,6 +152,13 @@ namespace nival_testing
                     if (reader.GetAttribute("name") == "operand")
                     {
                         operandFound = true;
+
+                        if (operandValid)
+                        {
+                            logger.AddMessage("Избыточный элемент <str name=\"operand\" ... />, исключите его, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                            continue;
+                        }
+
                         if (OperandValidation(reader))
                         {
                             operandValid = true;
@@ -145,11 +170,21 @@ namespace nival_testing
                 if (reader.Name == "int")
                 {
                     if (reader.GetAttribute("name") == null)
+                    {
                         logger.AddMessage("Пропущен атрибут name, <int name=\"mod\" ... />, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                        continue;
+                    }
 
                     if (reader.GetAttribute("name") == "mod")
                     {
                         modFound = true;
+
+                        if (modValid)
+                        {
+                            logger.AddMessage("Избыточный элемент <int name=\"mod\" ... />, исключите его, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
+                            continue;
+                        }
+
                         if (ModValidation(reader))
                         {
                             modValid = true;
@@ -169,7 +204,7 @@ namespace nival_testing
             if (uidValid && operandValid && modValid)
             {
                 if (newCalculation.mod == 0 && newCalculation.operand == Operand.divide)
-                    logger.AddMessage("Деление на ноль, строка " + (reader.LineNumber - 1) + ", позиция " + reader.LinePosition + ".");
+                    logger.AddMessage("Деление на ноль, строка " + reader.LineNumber + ", позиция " + reader.LinePosition + ".");
                 else
                     calculations.Add(newCalculation);
             }
